@@ -1,6 +1,6 @@
 package xyz.meurisse.computerstock.controller
 
-import org.springframework.http.MediaType
+import org.springframework.http.*
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -18,12 +18,13 @@ class ComputerController(
 ) {
 
     @GetMapping
-    fun listComputers(): List<ComputerDto> {
-        return computerService.listComputers().map { it.toDto() }
+    fun listComputers(): ResponseEntity<List<ComputerDto>> {
+        return ResponseEntity.ok(computerService.listComputers().map { it.toDto() })
     }
 
     @PostMapping
-    fun createComputer(@RequestBody computerCreateDto: ComputerCreateDto) {
+    fun createComputer(@RequestBody computerCreateDto: ComputerCreateDto): ResponseEntity<Void> {
         computerService.createComputer(computerCreateDto)
+        return ResponseEntity.status(HttpStatus.CREATED).build()
     }
 }
