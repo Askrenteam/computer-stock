@@ -15,4 +15,8 @@ class ComputerInMemoryRepository: ComputerRepository {
     override fun createComputer(computer: Computer) {
         computers.add(computer)
     }
+
+    fun clearRepository() {
+        computers.clear()
+    }
 }
