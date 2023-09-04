@@ -14,10 +14,10 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import xyz.meurisse.computerstock.controller.model.ComputerDto
-import xyz.meurisse.computerstock.controller.model.MonthlyReportDto
+import xyz.meurisse.computerstock.controller.model.MonthlyConsumptionReportDto
+import xyz.meurisse.computerstock.controller.model.MonthlySpendingReportDto
 import xyz.meurisse.computerstock.core.api.ComputerCreateDto
 import xyz.meurisse.computerstock.repository.ComputerInMemoryRepository
 import java.math.BigDecimal
@@ -101,13 +101,61 @@ class ComputerStockApplicationTest(
 		createComputer(computer4)
 
 		val expectedReport = listOf(
-				MonthlyReportDto(LocalDate.now().minusMonths(5).withDayOfMonth(1), BigDecimal("1299.98")),
-				MonthlyReportDto(LocalDate.now().minusMonths(2).withDayOfMonth(1), BigDecimal("999.99")),
+				MonthlySpendingReportDto(LocalDate.now().minusMonths(5).withDayOfMonth(1), BigDecimal("1299.98")),
+				MonthlySpendingReportDto(LocalDate.now().minusMonths(2).withDayOfMonth(1), BigDecimal("999.99")),
 		)
 
 		mockMvc.perform(get("/reports/monthly-spendings"))
 				.andExpect {
-					val result = objectMapper.readValue(it.response.contentAsString, object: TypeReference<List<MonthlyReportDto>>(){})
+					val result = objectMapper.readValue(it.response.contentAsString, object: TypeReference<List<MonthlySpendingReportDto>>(){})
+					assertEquals(expectedReport, result)
+				}
+	}
+
+	@Test
+	fun monthlyConsumptionReportsShouldAggregateAllComputerConsumption() {
+		val computer1 = ComputerCreateDto(
+				name = "First computer",
+				purchaseDate = LocalDate.now().minusMonths(5),
+				purchasePrice = BigDecimal("799.99"),
+				yearlyKWhConsumption = 500
+		)
+		val computer2 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(5),
+				yearlyKWhConsumption = 200
+		)
+		val computer3 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(2),
+				yearlyKWhConsumption = 300
+		)
+		val computer4 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(13),
+				yearlyKWhConsumption = 320
+		)
+
+		createComputer(computer1)
+		createComputer(computer2)
+		createComputer(computer3)
+		createComputer(computer4)
+
+		val expectedReport = listOf(
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(12).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(11).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(10).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(9).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(8).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(7).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(6).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(5).withDayOfMonth(1), 26),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(4).withDayOfMonth(1), 83),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(3).withDayOfMonth(1), 83),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(2).withDayOfMonth(1), 83),
+				MonthlyConsumptionReportDto(LocalDate.now().minusMonths(1).withDayOfMonth(1), 108),
+		)
+
+		mockMvc.perform(get("/reports/monthly-consumption"))
+				.andExpect {
+					val result = objectMapper.readValue(it.response.contentAsString, object: TypeReference<List<MonthlyConsumptionReportDto>>(){})
 					assertEquals(expectedReport, result)
 				}
 	}
