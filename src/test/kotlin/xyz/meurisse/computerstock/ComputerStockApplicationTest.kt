@@ -3,6 +3,7 @@ package xyz.meurisse.computerstock
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,6 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import xyz.meurisse.computerstock.controller.model.ComputerDto
+import xyz.meurisse.computerstock.controller.model.MonthlyReportDto
 import xyz.meurisse.computerstock.core.api.ComputerCreateDto
 import xyz.meurisse.computerstock.repository.ComputerInMemoryRepository
 import java.math.BigDecimal
@@ -69,6 +71,44 @@ class ComputerStockApplicationTest(
 				.andExpect {
 					val result = objectMapper.readValue(it.response.contentAsString, object: TypeReference<List<ComputerDto>>(){})
 					assertThat(result).extracting("name").containsExactly("First computer", "Second computer")
+				}
+	}
+
+	@Test
+	fun monthlySpendingReportsShouldAggregateAllComputerPrices() {
+		val computer1 = ComputerCreateDto(
+				name = "First computer",
+				purchaseDate = LocalDate.now().minusMonths(5),
+				purchasePrice = BigDecimal("799.99"),
+				yearlyKWhConsumption = 500
+		)
+		val computer2 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(5),
+				purchasePrice = BigDecimal("499.99")
+		)
+		val computer3 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(2),
+				purchasePrice = BigDecimal("999.99")
+		)
+		val computer4 = computer1.copy(
+				purchaseDate = LocalDate.now().minusMonths(13),
+				purchasePrice = BigDecimal("299.99")
+		)
+
+		createComputer(computer1)
+		createComputer(computer2)
+		createComputer(computer3)
+		createComputer(computer4)
+
+		val expectedReport = listOf(
+				MonthlyReportDto(LocalDate.now().minusMonths(5).withDayOfMonth(1), BigDecimal("1299.98")),
+				MonthlyReportDto(LocalDate.now().minusMonths(2).withDayOfMonth(1), BigDecimal("999.99")),
+		)
+
+		mockMvc.perform(get("/reports/monthly-spendings"))
+				.andExpect {
+					val result = objectMapper.readValue(it.response.contentAsString, object: TypeReference<List<MonthlyReportDto>>(){})
+					assertEquals(expectedReport, result)
 				}
 	}
 
