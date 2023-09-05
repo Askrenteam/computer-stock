@@ -46,7 +46,7 @@ class ComputerServiceImpl(
     override fun getConsumptionReport(): List<MonthlyConsumptionReport> {
         val computers = computerRepository.listComputers()
 
-        // TODO: the monthly consumption isn't very precise, we might want to use floats / bigdecimals
+        //TODO: the monthly consumption isn't very precise, we might want to use floats / bigdecimals
         return (12L downTo 1L).map { LocalDate.now().minusMonths(it).withDayOfMonth(1) }
                 .map { date -> MonthlyConsumptionReport(
                         startDate = date,

@@ -1,6 +1,7 @@
 package xyz.meurisse.computerstock.controller
 
 import org.springframework.http.*
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -12,11 +13,13 @@ import xyz.meurisse.computerstock.core.api.ComputerCreateDto
 import xyz.meurisse.computerstock.core.api.ComputerService
 
 @RestController
+@CrossOrigin //Wouldn't use this in production obviously
 @RequestMapping("/computers")
 class ComputerController(
         val computerService: ComputerService
 ) {
 
+    //TODO: a real app would offer a paginated endpoint
     @GetMapping
     fun listComputers(): ResponseEntity<List<ComputerDto>> {
         return ResponseEntity.ok(computerService.listComputers().map { it.toDto() })
